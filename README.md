@@ -1,36 +1,122 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# טיפול - מערכת ניהול לפרקטיקה טיפולית
 
-## Getting Started
+מערכת web מודרנית ומאובטחת לניהול פרקטיקה של מטפלים רגשיים.
 
-First, run the development server:
+## תכונות עיקריות
+
+- **ניהול מטופלים** - הוספה, עריכה, חיפוש וארכיון של מטופלים
+- **יומן פגישות** - ניהול פגישות עם לוח שנה אינטראקטיבי
+- **סיכומי טיפול** - עורך טקסט עשיר לכתיבת סיכומים מקצועיים
+- **הקלטה ותמלול** - הקלטת שיחות עם תמלול אוטומטי (Google AI Studio)
+- **ניתוח AI** - ניתוח טיפולי חכם של שיחות (Claude API)
+- **תשלומים** - מעקב תשלומים וחובות
+- **מסמכים** - העלאה וניהול מסמכים וטפסים
+- **דוחות** - סטטיסטיקות והכנסות
+- **התראות** - תזכורות יומיות ומשימות ממתינות
+
+## טכנולוגיות
+
+| רכיב | טכנולוגיה |
+|------|-----------|
+| Frontend | Next.js 16 (App Router) |
+| Styling | Tailwind CSS + shadcn/ui |
+| Database | PostgreSQL |
+| ORM | Prisma 7 |
+| Auth | NextAuth.js |
+| Calendar | FullCalendar |
+| Rich Text | TipTap Editor |
+| Charts | Recharts |
+| AI Transcription | Google AI Studio |
+| AI Analysis | Anthropic Claude |
+
+## התקנה
+
+### דרישות מקדימות
+
+- Node.js 18+
+- PostgreSQL 14+
+
+### שלבים
+
+1. **התקנת תלויות:**
+
+```bash
+npm install
+```
+
+2. **הגדרת משתני סביבה:**
+
+צור קובץ `.env.local` בתיקיית השורש עם:
+
+```env
+# Database
+DATABASE_URL="postgresql://username:password@localhost:5432/tipul?schema=public"
+
+# Authentication
+NEXTAUTH_SECRET="your-secret-key-here"
+NEXTAUTH_URL="http://localhost:3000"
+
+# Google AI Studio - לתמלול
+GOOGLE_AI_API_KEY="your-google-ai-api-key"
+
+# Anthropic (Claude) - לניתוח
+ANTHROPIC_API_KEY="your-anthropic-api-key"
+
+# Email (אופציונלי)
+RESEND_API_KEY="your-resend-api-key"
+```
+
+3. **יצירת בסיס הנתונים:**
+
+```bash
+npx prisma db push
+```
+
+4. **הרצה בסביבת פיתוח:**
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+פתח [http://localhost:3000](http://localhost:3000) בדפדפן.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## מבנה הפרויקט
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+tipul/
+├── prisma/
+│   └── schema.prisma          # מודלים של בסיס הנתונים
+├── src/
+│   ├── app/
+│   │   ├── (auth)/            # דפי התחברות והרשמה
+│   │   ├── (dashboard)/       # דפי הניהול
+│   │   │   ├── clients/       # ניהול מטופלים
+│   │   │   ├── calendar/      # יומן ופגישות
+│   │   │   ├── sessions/      # סיכומי טיפול
+│   │   │   ├── recordings/    # הקלטות ותמלולים
+│   │   │   ├── payments/      # חיובים וקבלות
+│   │   │   ├── documents/     # מסמכים
+│   │   │   ├── reports/       # דוחות
+│   │   │   ├── tasks/         # משימות
+│   │   │   └── settings/      # הגדרות
+│   │   └── api/               # API routes
+│   ├── components/            # קומפוננטות
+│   ├── lib/                   # פונקציות עזר
+│   │   ├── auth.ts            # NextAuth config
+│   │   ├── prisma.ts          # Prisma client
+│   │   ├── google-ai.ts       # Google AI Studio
+│   │   └── claude.ts          # Claude API
+│   └── types/                 # TypeScript types
+└── uploads/                   # קבצי הקלטות (לא ב-Git)
+```
 
-## Learn More
+## אבטחה ופרטיות
 
-To learn more about Next.js, take a look at the following resources:
+- כל הנתונים מוצפנים
+- מפתחות API נשמרים רק ב-environment variables
+- הקלטות ותמלולים נשמרים באופן מקומי
+- קריאות ל-AI APIs לא שומרות נתונים
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## רישיון
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+פרויקט פרטי - כל הזכויות שמורות.
