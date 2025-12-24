@@ -1,7 +1,6 @@
 import path from 'node:path';
-import type { PrismaConfig } from 'prisma';
 
-const config: PrismaConfig = {
+const config = {
   schema: path.join(__dirname, 'schema.prisma'),
   migrate: {
     async adapter() {
