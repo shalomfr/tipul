@@ -49,7 +49,10 @@ export async function POST(request: NextRequest) {
       const relativePath = recording.audioUrl.startsWith('/') 
         ? recording.audioUrl.slice(1) 
         : recording.audioUrl;
-      const filePath = join(process.cwd(), relativePath);
+      
+      // Use persistent disk on Render, fallback to local for development
+      const baseDir = process.env.UPLOADS_DIR || process.cwd();
+      const filePath = join(baseDir, relativePath.replace('uploads/', ''));
       
       console.log("Attempting to read file from:", filePath);
       

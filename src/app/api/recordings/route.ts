@@ -79,7 +79,10 @@ export async function POST(request: NextRequest) {
     // Save audio file
     const fileExtension = mimeType?.includes("webm") ? "webm" : "mp3";
     const fileName = `${uuidv4()}.${fileExtension}`;
-    const uploadsDir = join(process.cwd(), "uploads", "recordings");
+    
+    // Use persistent disk on Render, fallback to local for development
+    const baseDir = process.env.UPLOADS_DIR || join(process.cwd(), "uploads");
+    const uploadsDir = join(baseDir, "recordings");
     
     // Create directory if it doesn't exist
     await mkdir(uploadsDir, { recursive: true });

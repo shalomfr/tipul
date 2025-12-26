@@ -15,10 +15,13 @@ export async function GET(
     }
 
     const { path } = await params;
-    const filePath = join(process.cwd(), "uploads", ...path);
+    
+    // Use persistent disk on Render, fallback to local for development
+    const baseDir = process.env.UPLOADS_DIR || join(process.cwd(), "uploads");
+    const filePath = join(baseDir, ...path);
 
     // Security: Prevent directory traversal
-    if (!filePath.startsWith(join(process.cwd(), "uploads"))) {
+    if (!filePath.startsWith(baseDir)) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
