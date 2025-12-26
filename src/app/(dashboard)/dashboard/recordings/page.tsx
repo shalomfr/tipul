@@ -109,14 +109,14 @@ export default async function RecordingsPage() {
                 <div className="flex items-center gap-2">
                   {recording.status === "PENDING" && (
                     <Button variant="outline" asChild>
-                      <Link href={`/dashboard/recordings/${recording.id}/transcribe`}>
+                      <Link href={`/dashboard/recordings/${recording.id}`}>
                         תמלל
                       </Link>
                     </Button>
                   )}
                   {recording.status === "TRANSCRIBED" && (
                     <Button variant="outline" asChild>
-                      <Link href={`/dashboard/recordings/${recording.id}/analyze`}>
+                      <Link href={`/dashboard/recordings/${recording.id}`}>
                         נתח
                       </Link>
                     </Button>
