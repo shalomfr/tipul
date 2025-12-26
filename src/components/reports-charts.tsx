@@ -68,7 +68,7 @@ export function ReportsCharts({
               borderRadius: "var(--radius)",
               direction: "rtl",
             }}
-            formatter={(value: number) => [formatValue(value), ""]}
+            formatter={(value) => [formatValue(typeof value === 'number' ? value : 0), ""]}
             labelStyle={{ color: "var(--foreground)" }}
           />
           <Bar
