@@ -23,19 +23,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get recording
-    const recording = await prisma.recording.findFirst({
-      where: {
-        id: recordingId,
-        OR: [
-          { client: { therapistId: session.user.id } },
-          { session: { therapistId: session.user.id } },
-        ],
+    // Get recording - simplified query
+    const recording = await prisma.recording.findUnique({
+      where: { id: recordingId },
+      include: {
+        client: true,
+        session: true,
       },
     });
 
     if (!recording) {
       return NextResponse.json({ message: "הקלטה לא נמצאה" }, { status: 404 });
+    }
+
+    // Verify ownership
+    const isOwner = 
+      (recording.client && recording.client.therapistId === session.user.id) ||
+      (recording.session && recording.session.therapistId === session.user.id);
+    
+    if (!isOwner) {
+      return NextResponse.json({ message: "לא מורשה" }, { status: 403 });
     }
 
     // Update status to transcribing
@@ -124,10 +131,11 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-  } catch (error) {
-    console.error("Transcribe error:", error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("Transcribe error:", errorMessage, error);
     return NextResponse.json(
-      { message: "אירעה שגיאה בתמלול" },
+      { message: `אירעה שגיאה בתמלול: ${errorMessage}` },
       { status: 500 }
     );
   }
