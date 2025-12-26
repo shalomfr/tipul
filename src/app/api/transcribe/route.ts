@@ -45,18 +45,36 @@ export async function POST(request: NextRequest) {
     });
 
     try {
+      // Check if API key is configured
+      if (!process.env.GOOGLE_AI_API_KEY) {
+        console.error("GOOGLE_AI_API_KEY is not set");
+        throw new Error("API key not configured");
+      }
+
       // Read audio file - remove leading slash if present
       const relativePath = recording.audioUrl.startsWith('/') 
         ? recording.audioUrl.slice(1) 
         : recording.audioUrl;
       
       // Use persistent disk on Render, fallback to local for development
-      const baseDir = process.env.UPLOADS_DIR || process.cwd();
-      const filePath = join(baseDir, relativePath.replace('uploads/', ''));
+      let filePath: string;
+      if (process.env.UPLOADS_DIR) {
+        // On Render with persistent disk
+        // audioUrl is like: /uploads/recordings/xxx.webm
+        // We need: /var/data/uploads/recordings/xxx.webm
+        filePath = join(process.env.UPLOADS_DIR, relativePath.replace('uploads/', ''));
+      } else {
+        // Local development
+        filePath = join(process.cwd(), relativePath);
+      }
       
+      console.log("Audio URL:", recording.audioUrl);
+      console.log("UPLOADS_DIR:", process.env.UPLOADS_DIR);
       console.log("Attempting to read file from:", filePath);
       
       const audioBuffer = await readFile(filePath);
+      console.log("File read successfully, size:", audioBuffer.length);
+      
       const audioBase64 = audioBuffer.toString("base64");
       
       // Determine mime type
@@ -66,8 +84,11 @@ export async function POST(request: NextRequest) {
         ? "audio/ogg"
         : "audio/mpeg";
 
+      console.log("Calling Google AI with mimeType:", mimeType);
+      
       // Transcribe with Google AI Studio
       const result = await transcribeAudio(audioBase64, mimeType);
+      console.log("Transcription completed successfully");
 
       // Save transcription
       const transcription = await prisma.transcription.create({
@@ -86,8 +107,11 @@ export async function POST(request: NextRequest) {
       });
 
       return NextResponse.json(transcription, { status: 201 });
-    } catch (transcriptionError) {
-      console.error("Transcription failed:", transcriptionError);
+    } catch (transcriptionError: unknown) {
+      const errorMessage = transcriptionError instanceof Error 
+        ? transcriptionError.message 
+        : "Unknown error";
+      console.error("Transcription failed:", errorMessage, transcriptionError);
       
       // Update status to error
       await prisma.recording.update({
@@ -96,7 +120,7 @@ export async function POST(request: NextRequest) {
       });
 
       return NextResponse.json(
-        { message: "שגיאה בתמלול ההקלטה" },
+        { message: `שגיאה בתמלול: ${errorMessage}` },
         { status: 500 }
       );
     }
