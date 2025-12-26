@@ -45,15 +45,23 @@ export async function POST(request: NextRequest) {
     });
 
     try {
-      // Read audio file
-      const filePath = join(process.cwd(), recording.audioUrl);
+      // Read audio file - remove leading slash if present
+      const relativePath = recording.audioUrl.startsWith('/') 
+        ? recording.audioUrl.slice(1) 
+        : recording.audioUrl;
+      const filePath = join(process.cwd(), relativePath);
+      
+      console.log("Attempting to read file from:", filePath);
+      
       const audioBuffer = await readFile(filePath);
       const audioBase64 = audioBuffer.toString("base64");
       
       // Determine mime type
       const mimeType = recording.audioUrl.endsWith(".webm")
         ? "audio/webm"
-        : "audio/mp3";
+        : recording.audioUrl.endsWith(".ogg")
+        ? "audio/ogg"
+        : "audio/mpeg";
 
       // Transcribe with Google AI Studio
       const result = await transcribeAudio(audioBase64, mimeType);
