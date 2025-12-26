@@ -1,13 +1,35 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || '');
+// Lazy initialization to ensure environment variable is available
+let genAI: GoogleGenerativeAI | null = null;
+
+function getGenAI(): GoogleGenerativeAI {
+  if (!genAI) {
+    const apiKey = process.env.GOOGLE_AI_API_KEY;
+    if (!apiKey) {
+      throw new Error('GOOGLE_AI_API_KEY is not configured');
+    }
+    genAI = new GoogleGenerativeAI(apiKey);
+  }
+  return genAI;
+}
 
 export async function transcribeAudio(audioBase64: string, mimeType: string): Promise<{
   text: string;
   confidence?: number;
 }> {
+  // Check API key
+  const apiKey = process.env.GOOGLE_AI_API_KEY;
+  if (!apiKey) {
+    throw new Error('GOOGLE_AI_API_KEY is not configured');
+  }
+  
+  console.log('Starting transcription with mimeType:', mimeType);
+  console.log('Audio data length:', audioBase64.length);
+  console.log('API Key prefix:', apiKey.substring(0, 10) + '...');
+  
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = getGenAI().getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const result = await model.generateContent([
       {
@@ -25,14 +47,18 @@ export async function transcribeAudio(audioBase64: string, mimeType: string): Pr
 
     const response = await result.response;
     const text = response.text();
+    
+    console.log('Transcription successful, text length:', text.length);
 
     return {
       text,
       confidence: 0.95, // Gemini doesn't return confidence scores
     };
-  } catch (error) {
-    console.error('Transcription error:', error);
-    throw new Error('Failed to transcribe audio');
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorDetails = error instanceof Error && 'cause' in error ? String(error.cause) : '';
+    console.error('Transcription error:', errorMessage, errorDetails, error);
+    throw new Error(`Failed to transcribe audio: ${errorMessage}`);
   }
 }
 
@@ -44,7 +70,7 @@ export async function transcribeAudioWithTimestamps(
   segments: { start: number; end: number; text: string; speaker?: string }[];
 }> {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    const model = getGenAI().getGenerativeModel({ model: 'gemini-1.5-pro' });
 
     const result = await model.generateContent([
       {
