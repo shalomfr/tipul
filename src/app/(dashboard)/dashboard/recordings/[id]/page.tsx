@@ -72,15 +72,20 @@ export default function RecordingPage({ params }: { params: Promise<{ id: string
         body: JSON.stringify({ recordingId: id }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("שגיאה בתמלול");
+        const errorMsg = data.message || "שגיאה בתמלול";
+        console.error("Transcribe API error:", errorMsg);
+        throw new Error(errorMsg);
       }
 
       toast.success("התמלול הושלם בהצלחה");
       fetchRecording();
     } catch (error) {
       console.error("Transcribe error:", error);
-      toast.error("אירעה שגיאה בתמלול");
+      const errorMessage = error instanceof Error ? error.message : "אירעה שגיאה בתמלול";
+      toast.error(errorMessage);
     } finally {
       setIsTranscribing(false);
     }
