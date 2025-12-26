@@ -64,7 +64,7 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { name, phone, email, birthDate, address, notes, status } = body;
+    const { name, phone, email, birthDate, address, notes, status, initialDiagnosis, intakeNotes } = body;
 
     // Verify ownership
     const existingClient = await prisma.client.findFirst({
@@ -83,8 +83,10 @@ export async function PUT(
         email: email?.trim() || null,
         birthDate: birthDate ? new Date(birthDate) : null,
         address: address?.trim() || null,
-        notes: notes?.trim() || null,
+        notes: notes !== undefined ? (notes?.trim() || null) : existingClient.notes,
         status: status || existingClient.status,
+        initialDiagnosis: initialDiagnosis !== undefined ? (initialDiagnosis?.trim() || null) : existingClient.initialDiagnosis,
+        intakeNotes: intakeNotes !== undefined ? (intakeNotes?.trim() || null) : existingClient.intakeNotes,
       },
     });
 
@@ -130,6 +132,8 @@ export async function DELETE(
     );
   }
 }
+
+
 
 
 

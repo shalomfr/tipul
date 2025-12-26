@@ -1,14 +1,37 @@
 "use client";
 
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import dynamic from "next/dynamic";
+import { Loader2 } from "lucide-react";
+
+// Dynamic import to avoid SSR issues with recharts
+const BarChart = dynamic(
+  () => import("recharts").then((mod) => mod.BarChart),
+  { ssr: false }
+);
+const Bar = dynamic(
+  () => import("recharts").then((mod) => mod.Bar),
+  { ssr: false }
+);
+const XAxis = dynamic(
+  () => import("recharts").then((mod) => mod.XAxis),
+  { ssr: false }
+);
+const YAxis = dynamic(
+  () => import("recharts").then((mod) => mod.YAxis),
+  { ssr: false }
+);
+const CartesianGrid = dynamic(
+  () => import("recharts").then((mod) => mod.CartesianGrid),
+  { ssr: false }
+);
+const Tooltip = dynamic(
+  () => import("recharts").then((mod) => mod.Tooltip),
+  { ssr: false }
+);
+const ResponsiveContainer = dynamic(
+  () => import("recharts").then((mod) => mod.ResponsiveContainer),
+  { ssr: false }
+);
 
 interface ReportsChartsProps {
   data: { month: string; [key: string]: string | number }[];
@@ -36,7 +59,7 @@ export function ReportsCharts({
           <YAxis
             className="text-xs"
             tick={{ fill: "var(--muted-foreground)" }}
-            tickFormatter={(value) => formatValue(value)}
+            tickFormatter={(value: number) => formatValue(value)}
           />
           <Tooltip
             contentStyle={{
@@ -45,7 +68,7 @@ export function ReportsCharts({
               borderRadius: "var(--radius)",
               direction: "rtl",
             }}
-            formatter={(value) => [formatValue(value as number), ""]}
+            formatter={(value: number) => [formatValue(value), ""]}
             labelStyle={{ color: "var(--foreground)" }}
           />
           <Bar

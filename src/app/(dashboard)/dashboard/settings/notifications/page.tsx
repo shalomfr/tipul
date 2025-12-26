@@ -16,6 +16,7 @@ interface NotificationSettings {
   morningTime: string;
   eveningTime: string;
   debtThresholdDays: number;
+  monthlyReminderDay: number | null;
 }
 
 export default function NotificationSettingsPage() {
@@ -25,6 +26,7 @@ export default function NotificationSettingsPage() {
     morningTime: "08:00",
     eveningTime: "20:00",
     debtThresholdDays: 30,
+    monthlyReminderDay: null,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -44,6 +46,7 @@ export default function NotificationSettingsPage() {
               morningTime: emailSetting?.morningTime || "08:00",
               eveningTime: emailSetting?.eveningTime || "20:00",
               debtThresholdDays: emailSetting?.debtThresholdDays || 30,
+              monthlyReminderDay: emailSetting?.monthlyReminderDay || null,
             });
           }
         }
@@ -205,7 +208,7 @@ export default function NotificationSettingsPage() {
             <CardTitle>ספי התראה</CardTitle>
             <CardDescription>הגדר מתי לקבל התראות על חריגות</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="debtThreshold">ימים לתזכורת חוב</Label>
               <div className="flex items-center gap-3">
@@ -230,6 +233,32 @@ export default function NotificationSettingsPage() {
                 קבל התראה על חובות שלא שולמו מעל מספר הימים הזה
               </p>
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="monthlyReminder">תזכורת גבייה חודשית</Label>
+              <div className="flex items-center gap-3">
+                <Input
+                  id="monthlyReminder"
+                  type="number"
+                  min={1}
+                  max={31}
+                  value={settings.monthlyReminderDay || ""}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      monthlyReminderDay: e.target.value ? parseInt(e.target.value) : null,
+                    })
+                  }
+                  disabled={isSaving}
+                  className="w-24"
+                  placeholder="--"
+                />
+                <span className="text-sm text-muted-foreground">לחודש</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                קבל תזכורת בתאריך קבוע בכל חודש לגבות תשלומים. השאר ריק לביטול.
+              </p>
+            </div>
           </CardContent>
         </Card>
 
@@ -252,6 +281,7 @@ export default function NotificationSettingsPage() {
     </div>
   );
 }
+
 
 
 

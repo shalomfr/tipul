@@ -32,53 +32,65 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { emailEnabled, pushEnabled, morningTime, eveningTime, debtThresholdDays } = body;
+    const { emailEnabled, pushEnabled, morningTime, eveningTime, debtThresholdDays, monthlyReminderDay } = body;
 
     // Update or create email settings
-    await prisma.notificationSetting.upsert({
-      where: {
-        id: (await prisma.notificationSetting.findFirst({
-          where: { userId: session.user.id, channel: "email" },
-        }))?.id || "new-email",
-      },
-      create: {
-        userId: session.user.id,
-        channel: "email",
-        enabled: emailEnabled,
-        morningTime,
-        eveningTime,
-        debtThresholdDays,
-      },
-      update: {
-        enabled: emailEnabled,
-        morningTime,
-        eveningTime,
-        debtThresholdDays,
-      },
+    const existingEmail = await prisma.notificationSetting.findFirst({
+      where: { userId: session.user.id, channel: "email" },
     });
 
+    if (existingEmail) {
+      await prisma.notificationSetting.update({
+        where: { id: existingEmail.id },
+        data: {
+          enabled: emailEnabled,
+          morningTime,
+          eveningTime,
+          debtThresholdDays,
+          monthlyReminderDay: monthlyReminderDay || null,
+        },
+      });
+    } else {
+      await prisma.notificationSetting.create({
+        data: {
+          userId: session.user.id,
+          channel: "email",
+          enabled: emailEnabled,
+          morningTime,
+          eveningTime,
+          debtThresholdDays,
+          monthlyReminderDay: monthlyReminderDay || null,
+        },
+      });
+    }
+
     // Update or create push settings
-    await prisma.notificationSetting.upsert({
-      where: {
-        id: (await prisma.notificationSetting.findFirst({
-          where: { userId: session.user.id, channel: "push" },
-        }))?.id || "new-push",
-      },
-      create: {
-        userId: session.user.id,
-        channel: "push",
-        enabled: pushEnabled,
-        morningTime,
-        eveningTime,
-        debtThresholdDays,
-      },
-      update: {
-        enabled: pushEnabled,
-        morningTime,
-        eveningTime,
-        debtThresholdDays,
-      },
+    const existingPush = await prisma.notificationSetting.findFirst({
+      where: { userId: session.user.id, channel: "push" },
     });
+
+    if (existingPush) {
+      await prisma.notificationSetting.update({
+        where: { id: existingPush.id },
+        data: {
+          enabled: pushEnabled,
+          morningTime,
+          eveningTime,
+          debtThresholdDays,
+        },
+      });
+    } else {
+      await prisma.notificationSetting.create({
+        data: {
+          userId: session.user.id,
+          channel: "push",
+          enabled: pushEnabled,
+          morningTime,
+          eveningTime,
+          debtThresholdDays,
+        },
+      });
+    }
 
     const settings = await prisma.notificationSetting.findMany({
       where: { userId: session.user.id },
@@ -93,6 +105,7 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
+
 
 
 

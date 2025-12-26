@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -23,6 +24,15 @@ export default function RootLayout({
       <body className="min-h-screen bg-background antialiased font-sans">
         {children}
         <Toaster position="top-center" richColors />
+        {/* Client Hub CRM Chat Widget */}
+        {process.env.NEXT_PUBLIC_CRM_URL && process.env.NEXT_PUBLIC_CRM_API_KEY && (
+          <Script
+            src={`${process.env.NEXT_PUBLIC_CRM_URL}/widget.js`}
+            data-api-key={process.env.NEXT_PUBLIC_CRM_API_KEY}
+            data-position="bottom-left"
+            strategy="lazyOnload"
+          />
+        )}
       </body>
     </html>
   );

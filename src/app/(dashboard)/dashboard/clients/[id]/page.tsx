@@ -18,8 +18,15 @@ import {
   Mail, 
   MapPin,
   Cake,
-  Plus
+  Plus,
+  Send,
+  Stethoscope,
+  Search,
+  FolderOpen,
+  Download,
+  CheckCircle
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
@@ -210,7 +217,7 @@ export default async function ClientPage({
 
       {/* Tabs */}
       <Tabs defaultValue="sessions" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 max-w-xl">
+        <TabsList className="grid w-full grid-cols-7 max-w-3xl">
           <TabsTrigger value="sessions" className="gap-2">
             <Calendar className="h-4 w-4" />
             פגישות
@@ -218,6 +225,14 @@ export default async function ClientPage({
           <TabsTrigger value="notes" className="gap-2">
             <FileText className="h-4 w-4" />
             סיכומים
+          </TabsTrigger>
+          <TabsTrigger value="diagnosis" className="gap-2">
+            <Stethoscope className="h-4 w-4" />
+            אבחון
+          </TabsTrigger>
+          <TabsTrigger value="documents" className="gap-2">
+            <FolderOpen className="h-4 w-4" />
+            מסמכים
           </TabsTrigger>
           <TabsTrigger value="recordings" className="gap-2">
             <Mic className="h-4 w-4" />
@@ -316,10 +331,31 @@ export default async function ClientPage({
 
         <TabsContent value="notes" className="mt-6">
           <Card>
-            <CardHeader>
-              <CardTitle>סיכומי טיפול</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>סיכומי טיפול</CardTitle>
+                <CardDescription>
+                  {client.therapySessions.filter((s) => s.sessionNote).length} סיכומים
+                </CardDescription>
+              </div>
+              <Button asChild>
+                <Link href={`/dashboard/sessions/new?client=${client.id}`}>
+                  <Plus className="ml-2 h-4 w-4" />
+                  סיכום חדש
+                </Link>
+              </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="חפש בסיכומים..."
+                  className="pr-10"
+                  id="notes-search"
+                />
+              </div>
+
               {client.therapySessions.filter((s) => s.sessionNote).length > 0 ? (
                 <div className="space-y-4">
                   {client.therapySessions
@@ -362,6 +398,131 @@ export default async function ClientPage({
                 <div className="text-center py-8 text-muted-foreground">
                   <FileText className="mx-auto h-12 w-12 mb-3 opacity-50" />
                   <p>אין סיכומי טיפול עדיין</p>
+                  <Button variant="link" asChild className="mt-2">
+                    <Link href={`/dashboard/sessions/new?client=${client.id}`}>
+                      כתוב סיכום ראשון
+                    </Link>
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="diagnosis" className="mt-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>אבחון ראשוני</CardTitle>
+                <CardDescription>האבחון שלך לגבי המטופל</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {client.initialDiagnosis ? (
+                  <div className="prose prose-sm max-w-none whitespace-pre-wrap">
+                    {client.initialDiagnosis}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Stethoscope className="mx-auto h-12 w-12 mb-3 opacity-50" />
+                    <p>לא הוזן אבחון ראשוני</p>
+                    <Button variant="link" asChild className="mt-2">
+                      <Link href={`/dashboard/clients/${client.id}/edit`}>
+                        הוסף אבחון
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>הערות תשאול ראשוני</CardTitle>
+                <CardDescription>מהשיחה הראשונית עם המטופל</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {client.intakeNotes ? (
+                  <div className="prose prose-sm max-w-none whitespace-pre-wrap">
+                    {client.intakeNotes}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <FileText className="mx-auto h-12 w-12 mb-3 opacity-50" />
+                    <p>אין הערות תשאול</p>
+                    <Button variant="link" asChild className="mt-2">
+                      <Link href={`/dashboard/intake/${client.id}`}>
+                        מלא תשאול ראשוני
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="documents" className="mt-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>מסמכים</CardTitle>
+                <CardDescription>
+                  {client.documents.length} מסמכים
+                </CardDescription>
+              </div>
+              <Button asChild>
+                <Link href={`/dashboard/documents/upload?client=${client.id}`}>
+                  <Plus className="ml-2 h-4 w-4" />
+                  העלה מסמך
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {client.documents.length > 0 ? (
+                <div className="space-y-3">
+                  {client.documents.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="flex items-center justify-between p-4 rounded-lg bg-muted/50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                          <FileText className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{doc.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {format(new Date(doc.createdAt), "d/M/yyyy")}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {doc.signed ? (
+                          <Badge variant="default" className="gap-1">
+                            <CheckCircle className="h-3 w-3" />
+                            חתום
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">ממתין</Badge>
+                        )}
+                        <Button variant="ghost" size="icon" asChild>
+                          <a href={`/api${doc.fileUrl}`} target="_blank" rel="noopener noreferrer">
+                            <Download className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FolderOpen className="mx-auto h-12 w-12 mb-3 opacity-50" />
+                  <p>אין מסמכים עדיין</p>
+                  <Button variant="link" asChild className="mt-2">
+                    <Link href={`/dashboard/documents/upload?client=${client.id}`}>
+                      העלה מסמך ראשון
+                    </Link>
+                  </Button>
                 </div>
               )}
             </CardContent>
@@ -512,42 +673,74 @@ export default async function ClientPage({
         </TabsContent>
 
         <TabsContent value="info" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>פרטים נוספים</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {client.address && (
-                <div>
-                  <p className="text-sm text-muted-foreground">כתובת</p>
-                  <p className="font-medium">{client.address}</p>
-                </div>
-              )}
-              {client.notes && (
-                <div>
-                  <p className="text-sm text-muted-foreground">הערות</p>
-                  <p className="font-medium whitespace-pre-wrap">
-                    {client.notes}
-                  </p>
-                </div>
-              )}
-              {!client.address && !client.notes && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>אין פרטים נוספים</p>
-                  <Button variant="link" asChild className="mt-2">
-                    <Link href={`/dashboard/clients/${client.id}/edit`}>
-                      הוסף פרטים
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>פרטים נוספים</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {client.address && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">כתובת</p>
+                    <p className="font-medium">{client.address}</p>
+                  </div>
+                )}
+                {client.notes && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">הערות</p>
+                    <p className="font-medium whitespace-pre-wrap">
+                      {client.notes}
+                    </p>
+                  </div>
+                )}
+                {!client.address && !client.notes && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>אין פרטים נוספים</p>
+                    <Button variant="link" asChild className="mt-2">
+                      <Link href={`/dashboard/clients/${client.id}/edit`}>
+                        הוסף פרטים
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>שלח מייל למטופל</CardTitle>
+                <CardDescription>
+                  {client.email ? `ישלח ל-${client.email}` : "למטופל אין כתובת מייל"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {client.email ? (
+                  <Button asChild className="w-full">
+                    <Link href={`/dashboard/clients/${client.id}/email`}>
+                      <Send className="ml-2 h-4 w-4" />
+                      שלח מייל
                     </Link>
                   </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    <Mail className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                    <p className="text-sm">הוסף כתובת מייל כדי לשלוח הודעות</p>
+                    <Button variant="link" asChild className="mt-2">
+                      <Link href={`/dashboard/clients/${client.id}/edit`}>
+                        ערוך פרטים
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
   );
 }
+
 
 
 

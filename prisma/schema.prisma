@@ -58,36 +58,41 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts            Account[]
-  sessions            Session[]
-  clients             Client[]
-  therapySessions     TherapySession[]
-  documents           Document[]
-  notifications       Notification[]
-  tasks               Task[]
+  accounts             Account[]
+  sessions             Session[]
+  clients              Client[]
+  therapySessions      TherapySession[]
+  documents            Document[]
+  notifications        Notification[]
+  tasks                Task[]
   notificationSettings NotificationSetting[]
+  recurringPatterns    RecurringPattern[]
+  intakeTemplates      IntakeTemplate[]
 }
 
 model Client {
-  id             String    @id @default(cuid())
-  name           String
-  phone          String?
-  email          String?
-  birthDate      DateTime?
-  address        String?
-  status         ClientStatus @default(ACTIVE)
-  medicalHistory Json?
-  notes          String?   @db.Text
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id               String       @id @default(cuid())
+  name             String
+  phone            String?
+  email            String?
+  birthDate        DateTime?
+  address          String?
+  status           ClientStatus @default(ACTIVE)
+  medicalHistory   Json?
+  notes            String?      @db.Text
+  initialDiagnosis String?      @db.Text
+  intakeNotes      String?      @db.Text
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
   therapistId String
   therapist   User   @relation(fields: [therapistId], references: [id], onDelete: Cascade)
 
-  therapySessions TherapySession[]
-  payments        Payment[]
-  documents       Document[]
-  recordings      Recording[]
+  therapySessions   TherapySession[]
+  payments          Payment[]
+  documents         Document[]
+  recordings        Recording[]
+  recurringPatterns RecurringPattern[]
 }
 
 enum ClientStatus {
@@ -349,8 +354,41 @@ model NotificationSetting {
   eveningTime        String?  // Format: "HH:mm"
   morningTime        String?  // Format: "HH:mm"
   debtThresholdDays  Int      @default(30)
+  monthlyReminderDay Int?     // 1-31, day of month for payment reminder
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ==================== Recurring Sessions ====================
+
+model RecurringPattern {
+  id        String   @id @default(cuid())
+  dayOfWeek Int      // 0-6 (Sunday-Saturday)
+  time      String   // Format: "HH:mm"
+  duration  Int      @default(50) // minutes
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+}
+
+// ==================== Intake Templates ====================
+
+model IntakeTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  questions Json     // Array of question objects
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
