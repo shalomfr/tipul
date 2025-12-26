@@ -186,6 +186,8 @@ export default function CalendarPage() {
       endTime: `${dateStr}T${format(endTime, "HH:mm")}`,
       type: "IN_PERSON",
       price: "",
+      isRecurring: false,
+      weeksToRepeat: 4,
     });
     setIsDialogOpen(true);
   };
