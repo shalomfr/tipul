@@ -7,7 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, Loader2, Mic, Clock, User, Play, FileText, Brain, AlertCircle } from "lucide-react";
+import { ArrowRight, Loader2, Mic, Clock, User, Play, FileText, Brain, AlertCircle, Download, Trash2, RefreshCw } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -44,6 +55,7 @@ export default function RecordingPage({ params }: { params: Promise<{ id: string
   const [isLoading, setIsLoading] = useState(true);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchRecording();
@@ -114,6 +126,66 @@ export default function RecordingPage({ params }: { params: Promise<{ id: string
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const handleReTranscribe = async () => {
+    setIsTranscribing(true);
+    try {
+      const response = await fetch("/api/transcribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recordingId: id, force: true }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const errorMsg = data.message || "שגיאה בתמלול";
+        throw new Error(errorMsg);
+      }
+
+      toast.success("התמלול החדש הושלם בהצלחה");
+      fetchRecording();
+    } catch (error) {
+      console.error("Re-transcribe error:", error);
+      const errorMessage = error instanceof Error ? error.message : "אירעה שגיאה בתמלול";
+      toast.error(errorMessage);
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/recordings/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("שגיאה במחיקה");
+      }
+
+      toast.success("ההקלטה נמחקה בהצלחה");
+      router.push("/dashboard/recordings");
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("אירעה שגיאה במחיקת ההקלטה");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDownload = () => {
+    if (!recording) return;
+    
+    const link = document.createElement("a");
+    link.href = `/api${recording.audioUrl}`;
+    link.download = `recording-${recording.id}.${recording.audioUrl.split('.').pop()}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("ההורדה החלה");
   };
 
   const formatDuration = (seconds: number) => {
@@ -192,7 +264,8 @@ export default function RecordingPage({ params }: { params: Promise<{ id: string
         </div>
         
         <div className="flex gap-2">
-          {recording.status === "PENDING" && (
+          {/* Transcribe button - for pending or error status */}
+          {(recording.status === "PENDING" || recording.status === "ERROR") && (
             <Button onClick={handleTranscribe} disabled={isTranscribing}>
               {isTranscribing ? (
                 <>
@@ -207,6 +280,25 @@ export default function RecordingPage({ params }: { params: Promise<{ id: string
               )}
             </Button>
           )}
+          
+          {/* Re-transcribe button - for already transcribed recordings */}
+          {(recording.status === "TRANSCRIBED" || recording.status === "ANALYZED") && (
+            <Button variant="outline" onClick={handleReTranscribe} disabled={isTranscribing}>
+              {isTranscribing ? (
+                <>
+                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                  מתמלל...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="ml-2 h-4 w-4" />
+                  תמלל מחדש
+                </>
+              )}
+            </Button>
+          )}
+          
+          {/* Analyze button */}
           {recording.status === "TRANSCRIBED" && !recording.transcription?.analysis && (
             <Button onClick={handleAnalyze} disabled={isAnalyzing}>
               {isAnalyzing ? (
@@ -222,6 +314,39 @@ export default function RecordingPage({ params }: { params: Promise<{ id: string
               )}
             </Button>
           )}
+
+          {/* Download button */}
+          <Button variant="outline" onClick={handleDownload}>
+            <Download className="ml-2 h-4 w-4" />
+            הורד
+          </Button>
+
+          {/* Delete button with confirmation */}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" disabled={isDeleting}>
+                {isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  פעולה זו תמחק את ההקלטה, התמלול והניתוח לצמיתות. לא ניתן לשחזר.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>ביטול</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  מחק
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 

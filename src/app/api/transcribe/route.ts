@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { recordingId } = body;
+    const { recordingId, force } = body;
 
     if (!recordingId) {
       return NextResponse.json(
@@ -43,6 +43,24 @@ export async function POST(request: NextRequest) {
     
     if (!isOwner) {
       return NextResponse.json({ message: "לא מורשה" }, { status: 403 });
+    }
+
+    // If force re-transcribe, delete existing transcription
+    if (force) {
+      const existingTranscription = await prisma.transcription.findUnique({
+        where: { recordingId },
+      });
+      
+      if (existingTranscription) {
+        // Delete analysis if exists
+        await prisma.analysis.deleteMany({
+          where: { transcriptionId: existingTranscription.id },
+        });
+        // Delete transcription
+        await prisma.transcription.delete({
+          where: { id: existingTranscription.id },
+        });
+      }
     }
 
     // Update status to transcribing
