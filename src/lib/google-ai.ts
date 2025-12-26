@@ -29,7 +29,7 @@ export async function transcribeAudio(audioBase64: string, mimeType: string): Pr
   console.log('API Key prefix:', apiKey.substring(0, 10) + '...');
   
   try {
-    const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = getGenAI().getGenerativeModel({ model: 'gemini-2.5-pro-preview-05-06' });
 
     const result = await model.generateContent([
       {
@@ -70,7 +70,7 @@ export async function transcribeAudioWithTimestamps(
   segments: { start: number; end: number; text: string; speaker?: string }[];
 }> {
   try {
-    const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = getGenAI().getGenerativeModel({ model: 'gemini-2.5-pro-preview-05-06' });
 
     const result = await model.generateContent([
       {
