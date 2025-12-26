@@ -68,11 +68,14 @@ export async function POST(request: NextRequest) {
 
         if (existing) continue;
 
+        // Skip patterns without a client
+        if (!pattern.clientId) continue;
+
         // Create the session
         await prisma.therapySession.create({
           data: {
             therapistId: session.user.id,
-            clientId: pattern.clientId || undefined,
+            clientId: pattern.clientId,
             startTime: sessionStart,
             endTime: sessionEnd,
             status: "SCHEDULED",
